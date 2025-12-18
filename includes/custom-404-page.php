@@ -13,7 +13,14 @@ function ksc404_custom_404_page_handler() {
     $options = get_option( 'ksc404_settings', ksc404_get_default_settings() );
     $latest_posts_count = (int) $options['latest_posts_count'];
     $related_posts_count = (int) $options['related_posts_count'];
-    $display_post_types = !empty($options['latest_post_types']) && is_array($options['latest_post_types']) ? $options['latest_post_types'] : ['post'];
+    $all_post_types = isset($options['all_post_types']) ? (bool)$options['all_post_types'] : true;
+    if ($all_post_types) {
+        $public_post_types = get_post_types(['public' => true, 'show_ui' => true], 'names');
+        unset($public_post_types['attachment']);
+        $display_post_types = array_values($public_post_types);
+    } else {
+        $display_post_types = !empty($options['latest_post_types']) && is_array($options['latest_post_types']) ? $options['latest_post_types'] : ['post'];
+    }
 
     $redirect_found_action = $options['redirect_found_action'];
     $redirect_not_found_action = $options['redirect_not_found_action'];
@@ -36,6 +43,7 @@ function ksc404_custom_404_page_handler() {
     elseif(isset($wp_query->query_vars['tag']) && !empty($wp_query->query_vars['tag'])){$requested_slug = sanitize_title($wp_query->query_vars['tag']);}
 
     if(!empty($requested_slug) && $wpdb instanceof wpdb){
+        // 1. 最優先: _wp_old_slug（WordPressスラッグ変更履歴）
         $redirect_post_id_query = $wpdb->prepare("SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_wp_old_slug' AND meta_value = %s", $requested_slug);
         $redirect_post_id_result = $wpdb->get_var($redirect_post_id_query);
         if($redirect_post_id_result){
@@ -48,6 +56,21 @@ function ksc404_custom_404_page_handler() {
                 }
             } else {
                 $redirect_url = null; $redirect_post = null; $redirect_post_id = null;
+            }
+        }
+
+        // 2. _wp_old_slugで見つからない場合、拡張検索
+        if(empty($redirect_url)){
+            $candidate = ksc404_find_similar_post($requested_slug, $wpdb);
+            if($candidate){
+                $redirect_post_id = $candidate['post_id'];
+                $redirect_post = get_post($redirect_post_id);
+                if($redirect_post && $redirect_post->post_status === 'publish'){
+                    $redirect_url = get_permalink($redirect_post);
+                    if(function_exists('has_post_thumbnail') && has_post_thumbnail($redirect_post)){
+                        $redirect_thumbnail_url = get_the_post_thumbnail_url($redirect_post, 'thumbnail');
+                    }
+                }
             }
         }
     }

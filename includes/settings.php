@@ -34,7 +34,54 @@ add_action( 'admin_init', 'ksc404_settings_init' );
 
 function ksc404_settings_field_latest_posts_count_html() { $o=get_option('ksc404_settings', ksc404_get_default_settings());$c=$o['latest_posts_count'];echo '<input type="number" name="ksc404_settings[latest_posts_count]" value="'.esc_attr($c).'" min="0" step="1"><p class="description">'.__('カスタム404ページに表示する最新記事の件数を指定します。0で非表示。', 'kashiwazaki-seo-custom-404').'</p>'; }
 function ksc404_settings_field_related_posts_count_html() { $o=get_option('ksc404_settings', ksc404_get_default_settings());$c=$o['related_posts_count'];echo '<input type="number" name="ksc404_settings[related_posts_count]" value="'.esc_attr($c).'" min="0" step="1"><p class="description">'.__('タグに基づいて関連性の高い記事を表示する場合の最大件数を指定します。0で非表示。', 'kashiwazaki-seo-custom-404').'</p>'; }
-function ksc404_settings_field_post_types_html() { $o=get_option('ksc404_settings', ksc404_get_default_settings());$s=$o['latest_post_types'];$p=get_post_types(['public'=>true,'show_ui'=>true],'objects');unset($p['attachment']);if(empty($p)){echo '<p>'.__('投稿タイプなし。', 'kashiwazaki-seo-custom-404').'</p>';return;}echo '<fieldset>';foreach($p as $pt){$ck=in_array($pt->name,$s)?'checked':'';echo '<label style="margin-right:15px;display:block;"><input type="checkbox" name="ksc404_settings[latest_post_types][]" value="'.esc_attr($pt->name).'" '.$ck.'> '.esc_html($pt->label).' (<code>'.esc_html($pt->name).'</code>)</label>';}echo '</fieldset><p class="description">'.__('関連性の高い記事・最新記事で表示する対象の投稿タイプを選択。', 'kashiwazaki-seo-custom-404').'</p>'; }
+function ksc404_settings_field_post_types_html() {
+    $o = get_option('ksc404_settings', ksc404_get_default_settings());
+    $s = $o['latest_post_types'];
+    $all = isset($o['all_post_types']) ? (bool)$o['all_post_types'] : true;
+    $p = get_post_types(['public'=>true,'show_ui'=>true], 'objects');
+    unset($p['attachment']);
+
+    if (empty($p)) {
+        echo '<p>'.__('投稿タイプなし。', 'kashiwazaki-seo-custom-404').'</p>';
+        return;
+    }
+
+    $all_checked = $all ? 'checked' : '';
+    $accordion_style = $all ? 'display:none;' : '';
+
+    echo '<fieldset>';
+    echo '<label style="display:block;margin-bottom:10px;font-weight:bold;">';
+    echo '<input type="checkbox" id="ksc404_all_post_types" name="ksc404_settings[all_post_types]" value="1" '.$all_checked.'> ';
+    echo esc_html__('すべての投稿タイプを対象にする', 'kashiwazaki-seo-custom-404');
+    echo '</label>';
+
+    echo '<div id="ksc404_post_types_accordion" style="'.$accordion_style.'margin-left:20px;padding:10px;border:1px solid #ccd0d4;border-radius:4px;background:#f9f9f9;">';
+    echo '<p style="margin:0 0 10px 0;font-size:12px;color:#666;">'.__('個別に選択:', 'kashiwazaki-seo-custom-404').'</p>';
+
+    foreach ($p as $pt) {
+        $ck = in_array($pt->name, $s) ? 'checked' : '';
+        echo '<label style="display:block;margin-bottom:5px;">';
+        echo '<input type="checkbox" name="ksc404_settings[latest_post_types][]" value="'.esc_attr($pt->name).'" '.$ck.'> ';
+        echo esc_html($pt->label).' (<code>'.esc_html($pt->name).'</code>)';
+        echo '</label>';
+    }
+    echo '</div>';
+    echo '</fieldset>';
+
+    echo '<p class="description">'.__('関連性の高い記事・最新記事で表示する対象の投稿タイプを選択。「すべて」をチェックすると全公開投稿タイプが対象になります。', 'kashiwazaki-seo-custom-404').'</p>';
+
+    echo '<script>
+    (function(){
+        var allCheckbox = document.getElementById("ksc404_all_post_types");
+        var accordion = document.getElementById("ksc404_post_types_accordion");
+        if (allCheckbox && accordion) {
+            allCheckbox.addEventListener("change", function(){
+                accordion.style.display = this.checked ? "none" : "block";
+            });
+        }
+    })();
+    </script>';
+}
 function ksc404_settings_field_color_theme_html() { $o=get_option('ksc404_settings', ksc404_get_default_settings());$ct=$o['color_theme'];$ts=ksc404_get_color_themes();echo '<fieldset><legend class="screen-reader-text"><span>'.__('配色テーマ', 'kashiwazaki-seo-custom-404').'</span></legend>';foreach($ts as $sl=>$th){echo '<div style="margin-bottom:10px;"><label><input type="radio" name="ksc404_settings[color_theme]" value="'.esc_attr($sl).'" '.checked($ct,$sl,false).'> <strong>'.esc_html($th['name']).'</strong></label><p style="margin-top:0;margin-left:25px;font-size:0.9em;color:#666;">'.esc_html($th['description']).'</p></div>';}echo '</fieldset><p class="description">'.__('カスタム404ページの配色テーマを選択。', 'kashiwazaki-seo-custom-404').'</p>'; }
 
 function ksc404_settings_field_redirect_found_action_html() {
@@ -88,6 +135,7 @@ function ksc404_settings_sanitize($in){
 
     $out['latest_posts_count'] = isset($in['latest_posts_count']) ? absint($in['latest_posts_count']) : $defaults['latest_posts_count'];
     $out['related_posts_count'] = isset($in['related_posts_count']) ? absint($in['related_posts_count']) : $defaults['related_posts_count'];
+    $out['all_post_types'] = !empty($in['all_post_types']);
     $out['latest_post_types'] = isset($in['latest_post_types']) && is_array($in['latest_post_types'])
         ? array_filter(array_map('sanitize_key', $in['latest_post_types']), function($t){ return post_type_exists($t) && $t !== 'attachment'; })
         : $defaults['latest_post_types'];

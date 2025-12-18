@@ -3,7 +3,7 @@
  * Plugin Name: Kashiwazaki SEO Custom 404
  * Plugin URI: https://www.tsuyoshikashiwazaki.jp
  * Description: HTTP 404エラー時にオリジナルのエラーページを表示し、リダイレクト候補や関連性の高い記事・最新記事を提示します。配色テーマ選択、構造化マークアップ、フッター機能付き。リダイレクト動作のカスタマイズも可能です。
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: 柏崎 剛
  * Author URI: https://www.tsuyoshikashiwazaki.jp
  * License: GPL2 or later
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'KSC404_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'KSC404_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'KSC404_VERSION', '1.0.0' );
+define( 'KSC404_VERSION', '1.0.1' );
 
 require_once KSC404_PLUGIN_DIR . 'includes/utils.php';
 require_once KSC404_PLUGIN_DIR . 'includes/settings.php';
