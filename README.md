@@ -3,7 +3,7 @@
 ![WordPress](https://img.shields.io/badge/WordPress-5.0%2B-blue.svg)
 ![PHP](https://img.shields.io/badge/PHP-7.0%2B-blue.svg)
 ![License](https://img.shields.io/badge/license-GPL--2.0%2B-green.svg)
-![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.2-blue.svg)
 
 HTTP 404エラー時にオリジナルのエラーページを表示し、リダイレクト候補や関連性の高い記事・最新記事を提示するWordPressプラグインです。
 
@@ -96,16 +96,6 @@ URLのスラッグから既存ページが特定できた場合の動作を選�
 
 - WordPress 5.0以上
 - PHP 7.0以上
-
-## 更新履歴
-
-### [1.0.1] - 2025-12-18
-- **追加**: 投稿タイプ選択に「すべての投稿タイプを対象にする」オプションを追加
-- **強化**: 移動先ページ検出機能（類似スラッグ検索、タイトルキーワード検索、スコアリング）
-- **改善**: 個別の投稿タイプ選択をアコーディオン形式に変更（「すべて」がOFFの場合のみ表示）
-
-### [1.0.0] - 2025-12-18
-- 初回リリース
 
 ## ライセンス
 

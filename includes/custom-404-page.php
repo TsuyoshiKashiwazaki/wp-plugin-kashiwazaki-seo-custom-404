@@ -29,6 +29,7 @@ function ksc404_custom_404_page_handler() {
     $requested_slug = ''; $redirect_url = null; $redirect_post_id = null; $redirect_post = null; $redirect_thumbnail_url = '';
     $requested_uri = isset($_SERVER['REQUEST_URI']) ? esc_url_raw(wp_unslash($_SERVER['REQUEST_URI'])) : '';
     $requested_uri_path = parse_url($requested_uri, PHP_URL_PATH) ?: '';
+    $detected_post_type = '';
 
     if(!empty($requested_uri)){
         $path_parts = explode('/', trim($requested_uri_path, '/'));
@@ -41,6 +42,23 @@ function ksc404_custom_404_page_handler() {
     elseif(isset($wp_query->query_vars['pagename']) && !empty($wp_query->query_vars['pagename'])){$requested_slug = sanitize_title(basename($wp_query->query_vars['pagename']));}
     elseif(isset($wp_query->query_vars['category_name']) && !empty($wp_query->query_vars['category_name'])){$requested_slug = sanitize_title($wp_query->query_vars['category_name']);}
     elseif(isset($wp_query->query_vars['tag']) && !empty($wp_query->query_vars['tag'])){$requested_slug = sanitize_title($wp_query->query_vars['tag']);}
+    else {
+        // CPT query var チェック
+        $cpt_types = get_post_types(['public' => true, '_builtin' => false], 'objects');
+        foreach ($cpt_types as $pt_obj) {
+            $qv = $pt_obj->query_var;
+            if ($qv && isset($wp_query->query_vars[$qv]) && !empty($wp_query->query_vars[$qv])) {
+                $requested_slug = sanitize_title(basename($wp_query->query_vars[$qv]));
+                $detected_post_type = $pt_obj->name;
+                break;
+            }
+        }
+    }
+
+    // URL構造から post_type を推定（フォールバック）
+    if (empty($detected_post_type) && !empty($requested_uri_path)) {
+        $detected_post_type = ksc404_detect_post_type_from_url($requested_uri_path);
+    }
 
     if(!empty($requested_slug) && $wpdb instanceof wpdb){
         // 1. 最優先: _wp_old_slug（WordPressスラッグ変更履歴）
@@ -61,7 +79,7 @@ function ksc404_custom_404_page_handler() {
 
         // 2. _wp_old_slugで見つからない場合、拡張検索
         if(empty($redirect_url)){
-            $candidate = ksc404_find_similar_post($requested_slug, $wpdb);
+            $candidate = ksc404_find_similar_post($requested_slug, $wpdb, $detected_post_type, $requested_uri);
             if($candidate){
                 $redirect_post_id = $candidate['post_id'];
                 $redirect_post = get_post($redirect_post_id);

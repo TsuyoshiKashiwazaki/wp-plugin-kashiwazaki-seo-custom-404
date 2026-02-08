@@ -137,10 +137,36 @@ function ksc404_get_default_settings() {
 }
 
 /**
- * 類似記事を検索（スコアリングで最適な候補を返す）
- * 優先順位: 完全一致スラッグ > 前方一致 > 部分一致 > タイトル検索
+ * URLパスから post_type を推定する
+ * 登録済みCPTの rewrite slug とURLパスの先頭部分を照合し、最長一致で post_type を返す
  */
-function ksc404_find_similar_post($slug, $wpdb) {
+function ksc404_detect_post_type_from_url($uri_path) {
+    if (empty($uri_path)) {
+        return '';
+    }
+    $uri_path = trim($uri_path, '/');
+    $post_types = get_post_types(['public' => true], 'objects');
+    $best_match = '';
+    $best_length = 0;
+    foreach ($post_types as $pt_obj) {
+        if (empty($pt_obj->rewrite) || empty($pt_obj->rewrite['slug'])) {
+            continue;
+        }
+        $rewrite_slug = trim($pt_obj->rewrite['slug'], '/');
+        $rewrite_len = strlen($rewrite_slug);
+        if ($rewrite_len > 0 && $rewrite_len > $best_length && strpos($uri_path, $rewrite_slug . '/') === 0) {
+            $best_match = $pt_obj->name;
+            $best_length = $rewrite_len;
+        }
+    }
+    return $best_match;
+}
+
+/**
+ * 類似記事を検索（スコアリングで最適な候補を返す）
+ * 優先順位: ポストID検知 > 完全一致スラッグ > 前方一致 > 部分一致 > タイトル検索
+ */
+function ksc404_find_similar_post($slug, $wpdb, $post_type_hint = '', $requested_uri = '') {
     if (empty($slug) || strlen($slug) < 2) {
         return null;
     }
@@ -150,88 +176,184 @@ function ksc404_find_similar_post($slug, $wpdb) {
     unset($public_post_types['attachment']);
     $post_types_in = "'" . implode("','", array_map('esc_sql', $public_post_types)) . "'";
 
-    // 2-1. 完全一致スラッグ（post_name = slug）
+    // post_type 絞り込み句を構築
+    $post_type_clause = '';
+    if (!empty($post_type_hint) && in_array($post_type_hint, array_keys($public_post_types), true)) {
+        $post_type_clause = $wpdb->prepare(" AND post_type = %s", $post_type_hint);
+    }
+
+    // Step 0: ポストID検知（最優先）
+    if (!empty($requested_uri)) {
+        $uri_parts = parse_url($requested_uri);
+
+        // ?p=123, ?page_id=123 等のクエリパラメータからID検知
+        if (!empty($uri_parts['query'])) {
+            parse_str($uri_parts['query'], $qp);
+            foreach (['p', 'page_id'] as $id_param) {
+                if (isset($qp[$id_param]) && ctype_digit($qp[$id_param])) {
+                    $id_post = get_post((int)$qp[$id_param]);
+                    if ($id_post && $id_post->post_status === 'publish' && isset($public_post_types[$id_post->post_type])) {
+                        return ['post_id' => $id_post->ID, 'score' => 100, 'match_type' => 'post_id_param'];
+                    }
+                }
+            }
+        }
+
+        // パス内数値セグメントからID検知
+        $segments = explode('/', trim($uri_parts['path'] ?? '', '/'));
+        foreach ($segments as $seg) {
+            if (ctype_digit($seg) && (int)$seg > 0) {
+                $id_post = get_post((int)$seg);
+                if ($id_post && $id_post->post_status === 'publish' && isset($public_post_types[$id_post->post_type])) {
+                    $score = (!empty($post_type_hint) && $id_post->post_type === $post_type_hint) ? 95 : 50;
+                    $candidates[] = ['post_id' => $id_post->ID, 'score' => $score, 'match_type' => 'post_id_in_url'];
+                }
+            }
+        }
+    }
+
+    // Step 1: 完全一致スラッグ（post_name = slug）— post_type 絞り込みあり
     $exact_query = $wpdb->prepare(
         "SELECT ID, post_title, post_name FROM {$wpdb->posts}
-         WHERE post_name = %s AND post_status = 'publish' AND post_type IN ($post_types_in) LIMIT 1",
+         WHERE post_name = %s AND post_status = 'publish' AND post_type IN ($post_types_in){$post_type_clause} LIMIT 1",
         $slug
     );
     $exact_result = $wpdb->get_row($exact_query);
     if ($exact_result) {
         return ['post_id' => (int)$exact_result->ID, 'score' => 100, 'match_type' => 'exact_slug'];
     }
+    // フォールバック: post_type 絞り込みなしで再検索
+    if (!empty($post_type_clause)) {
+        $exact_query_all = $wpdb->prepare(
+            "SELECT ID, post_title, post_name FROM {$wpdb->posts}
+             WHERE post_name = %s AND post_status = 'publish' AND post_type IN ($post_types_in) LIMIT 1",
+            $slug
+        );
+        $exact_result_all = $wpdb->get_row($exact_query_all);
+        if ($exact_result_all) {
+            return ['post_id' => (int)$exact_result_all->ID, 'score' => 100, 'match_type' => 'exact_slug'];
+        }
+    }
 
-    // 2-2. 前方一致（slug%）- 末尾に数字や日付が付いたパターン
+    // Step 2: 前方一致（slug%）- 末尾に数字や日付が付いたパターン
     $prefix_query = $wpdb->prepare(
         "SELECT ID, post_title, post_name FROM {$wpdb->posts}
-         WHERE post_name LIKE %s AND post_status = 'publish' AND post_type IN ($post_types_in)
+         WHERE post_name LIKE %s AND post_status = 'publish' AND post_type IN ($post_types_in){$post_type_clause}
          ORDER BY post_date DESC LIMIT 5",
         $wpdb->esc_like($slug) . '%'
     );
     $prefix_results = $wpdb->get_results($prefix_query);
+    if (empty($prefix_results) && !empty($post_type_clause)) {
+        $prefix_query = $wpdb->prepare(
+            "SELECT ID, post_title, post_name FROM {$wpdb->posts}
+             WHERE post_name LIKE %s AND post_status = 'publish' AND post_type IN ($post_types_in)
+             ORDER BY post_date DESC LIMIT 5",
+            $wpdb->esc_like($slug) . '%'
+        );
+        $prefix_results = $wpdb->get_results($prefix_query);
+    }
     foreach ($prefix_results as $row) {
         $similarity = similar_text($slug, $row->post_name, $percent);
         $candidates[] = ['post_id' => (int)$row->ID, 'score' => 80 + ($percent * 0.15), 'match_type' => 'prefix'];
     }
 
-    // 2-3. 後方一致（%slug）- 先頭にカテゴリ等が付いたパターン
+    // Step 3: 後方一致（%slug）- 先頭にカテゴリ等が付いたパターン
     $suffix_query = $wpdb->prepare(
         "SELECT ID, post_title, post_name FROM {$wpdb->posts}
-         WHERE post_name LIKE %s AND post_status = 'publish' AND post_type IN ($post_types_in)
+         WHERE post_name LIKE %s AND post_status = 'publish' AND post_type IN ($post_types_in){$post_type_clause}
          ORDER BY post_date DESC LIMIT 5",
         '%' . $wpdb->esc_like($slug)
     );
     $suffix_results = $wpdb->get_results($suffix_query);
+    if (empty($suffix_results) && !empty($post_type_clause)) {
+        $suffix_query = $wpdb->prepare(
+            "SELECT ID, post_title, post_name FROM {$wpdb->posts}
+             WHERE post_name LIKE %s AND post_status = 'publish' AND post_type IN ($post_types_in)
+             ORDER BY post_date DESC LIMIT 5",
+            '%' . $wpdb->esc_like($slug)
+        );
+        $suffix_results = $wpdb->get_results($suffix_query);
+    }
     foreach ($suffix_results as $row) {
         $similarity = similar_text($slug, $row->post_name, $percent);
         $candidates[] = ['post_id' => (int)$row->ID, 'score' => 70 + ($percent * 0.15), 'match_type' => 'suffix'];
     }
 
-    // 2-4. 部分一致（%slug%）
+    // Step 4: 部分一致（%slug%）
     if (strlen($slug) >= 4) {
         $partial_query = $wpdb->prepare(
             "SELECT ID, post_title, post_name FROM {$wpdb->posts}
-             WHERE post_name LIKE %s AND post_status = 'publish' AND post_type IN ($post_types_in)
+             WHERE post_name LIKE %s AND post_status = 'publish' AND post_type IN ($post_types_in){$post_type_clause}
              ORDER BY post_date DESC LIMIT 5",
             '%' . $wpdb->esc_like($slug) . '%'
         );
         $partial_results = $wpdb->get_results($partial_query);
+        if (empty($partial_results) && !empty($post_type_clause)) {
+            $partial_query = $wpdb->prepare(
+                "SELECT ID, post_title, post_name FROM {$wpdb->posts}
+                 WHERE post_name LIKE %s AND post_status = 'publish' AND post_type IN ($post_types_in)
+                 ORDER BY post_date DESC LIMIT 5",
+                '%' . $wpdb->esc_like($slug) . '%'
+            );
+            $partial_results = $wpdb->get_results($partial_query);
+        }
         foreach ($partial_results as $row) {
             $similarity = similar_text($slug, $row->post_name, $percent);
             $candidates[] = ['post_id' => (int)$row->ID, 'score' => 60 + ($percent * 0.2), 'match_type' => 'partial'];
         }
     }
 
-    // 2-5. キーワード分解してタイトル検索
-    $keywords = array_filter(explode('-', $slug), function($w) { return strlen($w) >= 2; });
+    // Step 5: キーワード分解してタイトル検索
+    $keywords = array_filter(explode('-', $slug), function($w) { return mb_strlen($w) >= 3; });
     if (!empty($keywords)) {
+        $keywords = array_values($keywords);
         $title_conditions = [];
         foreach ($keywords as $keyword) {
             $title_conditions[] = $wpdb->prepare("post_title LIKE %s", '%' . $wpdb->esc_like($keyword) . '%');
         }
+
         // 全キーワードを含むタイトル
         $title_all_query = "SELECT ID, post_title, post_name FROM {$wpdb->posts}
                             WHERE (" . implode(' AND ', $title_conditions) . ")
-                            AND post_status = 'publish' AND post_type IN ($post_types_in)
+                            AND post_status = 'publish' AND post_type IN ($post_types_in){$post_type_clause}
                             ORDER BY post_date DESC LIMIT 3";
         $title_all_results = $wpdb->get_results($title_all_query);
+        if (empty($title_all_results) && !empty($post_type_clause)) {
+            $title_all_query = "SELECT ID, post_title, post_name FROM {$wpdb->posts}
+                                WHERE (" . implode(' AND ', $title_conditions) . ")
+                                AND post_status = 'publish' AND post_type IN ($post_types_in)
+                                ORDER BY post_date DESC LIMIT 3";
+            $title_all_results = $wpdb->get_results($title_all_query);
+        }
         foreach ($title_all_results as $row) {
             $candidates[] = ['post_id' => (int)$row->ID, 'score' => 55, 'match_type' => 'title_all_keywords'];
         }
 
-        // いずれかのキーワードを含むタイトル
+        // いずれかのキーワードを含むタイトル（マッチ率50%以上ゲート）
         if (count($keywords) > 1) {
             $title_any_query = "SELECT ID, post_title, post_name FROM {$wpdb->posts}
                                 WHERE (" . implode(' OR ', $title_conditions) . ")
-                                AND post_status = 'publish' AND post_type IN ($post_types_in)
+                                AND post_status = 'publish' AND post_type IN ($post_types_in){$post_type_clause}
                                 ORDER BY post_date DESC LIMIT 5";
             $title_any_results = $wpdb->get_results($title_any_query);
+            if (empty($title_any_results) && !empty($post_type_clause)) {
+                $title_any_query = "SELECT ID, post_title, post_name FROM {$wpdb->posts}
+                                    WHERE (" . implode(' OR ', $title_conditions) . ")
+                                    AND post_status = 'publish' AND post_type IN ($post_types_in)
+                                    ORDER BY post_date DESC LIMIT 5";
+                $title_any_results = $wpdb->get_results($title_any_query);
+            }
             foreach ($title_any_results as $row) {
                 $match_count = 0;
                 foreach ($keywords as $kw) {
                     if (mb_stripos($row->post_title, $kw) !== false) $match_count++;
                 }
-                $candidates[] = ['post_id' => (int)$row->ID, 'score' => 40 + ($match_count * 5), 'match_type' => 'title_some_keywords'];
+                $match_ratio = $match_count / count($keywords);
+                if ($match_ratio < 0.5) {
+                    continue; // 半数未満のキーワード一致は除外
+                }
+                $score = 40 + (int)($match_ratio * 15);
+                $candidates[] = ['post_id' => (int)$row->ID, 'score' => $score, 'match_type' => 'title_some_keywords'];
             }
         }
     }
@@ -252,7 +374,7 @@ function ksc404_find_similar_post($slug, $wpdb) {
     usort($unique, function($a, $b) { return $b['score'] - $a['score']; });
     $best = reset($unique);
 
-    // スコアが40以上の場合のみ返す（ノイズ除去）
-    return $best['score'] >= 40 ? $best : null;
+    // スコアが45以上の場合のみ返す（ノイズ除去）
+    return $best['score'] >= 45 ? $best : null;
 }
 ?>
