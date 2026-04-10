@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>トラブルシューティング - Kashiwazaki SEO Custom 404 マニュアル</title>
+<link rel="stylesheet" href="css/style.css?v=1">
+</head>
+<body>
+
+<button class="hamburger-btn" aria-label="Menu" aria-expanded="false">&#9776;</button>
+
+<nav class="sidebar">
+<div class="sidebar-header"><h2 style="color:#fff;">Custom 404</h2><span class="version">v1.0.2</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
+<ul><li><a href="index.html">概要</a></li><li><a href="setup.html">インストール・初期設定</a></li><li><a href="features.html">機能詳細</a></li><li><a href="troubleshooting.html">トラブルシューティング</a></li></ul>
+</nav>
+
+<main class="content">
+
+<h1>トラブルシューティング</h1>
+
+<p class="lead">Kashiwazaki SEO Custom 404 の使用中に発生する可能性のある問題と、その解決方法をまとめています。</p>
+
+<h2>404ページがカスタマイズされない</h2>
+
+<h3>症状</h3>
+<p>プラグインを有効化しても、404ページがWordPressのデフォルト表示のままになる。</p>
+
+<h3>解決方法</h3>
+
+<div class="step">
+<span class="step-number">1</span>
+<div class="step-body">
+<p><strong>プラグインの有効化を確認</strong> - WordPress管理画面の <strong>プラグイン</strong> ページで、「Kashiwazaki SEO Custom 404」が有効になっているか確認してください。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">2</span>
+<div class="step-body">
+<p><strong>テーマの404.phpを確認</strong> - 使用中のテーマに独自の <code>404.php</code> テンプレートがある場合、プラグインの出力と競合する可能性があります。テーマの404テンプレートの内容を確認してください。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">3</span>
+<div class="step-body">
+<p><strong>キャッシュをクリア</strong> - キャッシュプラグインやCDNのキャッシュが原因で、変更が反映されない場合があります。すべてのキャッシュをクリアしてください。</p>
+</div>
+</div>
+
+<h2>移転先ページが検出されない</h2>
+
+<h3>症状</h3>
+<p>404ページに移転先候補のページが表示されない。</p>
+
+<h3>解決方法</h3>
+
+<div class="step">
+<span class="step-number">1</span>
+<div class="step-body">
+<p><strong>投稿のスラッグを確認</strong> - 移転先として検出されるには、既存の投稿や固定ページのスラッグまたはタイトルが、リクエストURLと関連している必要があります。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">2</span>
+<div class="step-body">
+<p><strong>投稿ステータスを確認</strong> - 検出対象となるのは「公開済み」のコンテンツのみです。下書きや非公開の投稿は検出されません。</p>
+</div>
+</div>
+
+<div class="callout callout-tip">
+<p class="callout-title">ヒント</p>
+<p>スラッグの一部が一致するだけでも検出される場合があります。URLの構造を工夫することで、検出精度を向上させることができます。</p>
+</div>
+
+<h2>JSON-LDが出力されない</h2>
+
+<h3>症状</h3>
+<p>ページのソースコードを確認しても、JSON-LDスクリプトタグが見つからない。</p>
+
+<h3>解決方法</h3>
+
+<div class="step">
+<span class="step-number">1</span>
+<div class="step-body">
+<p><strong>実際の404ページで確認</strong> - JSON-LDは404エラーが発生したページでのみ出力されます。存在するページでは出力されません。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">2</span>
+<div class="step-body">
+<p><strong>他のSEOプラグインとの競合を確認</strong> - 他のSEOプラグインがJSON-LD出力を上書きしている可能性があります。一時的に他のSEOプラグインを無効化して確認してください。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">3</span>
+<div class="step-body">
+<p><strong>ブラウザのデベロッパーツールで確認</strong> - ブラウザの開発者ツールの「Elements」タブで <code>&lt;script type="application/ld+json"&gt;</code> を検索してください。</p>
+</div>
+</div>
+
+<h2>テーマの色が変わらない</h2>
+
+<h3>症状</h3>
+<p>設定画面でカラーテーマを変更しても、404ページの見た目が変わらない。</p>
+
+<h3>解決方法</h3>
+
+<div class="step">
+<span class="step-number">1</span>
+<div class="step-body">
+<p><strong>設定の保存を確認</strong> - 設定画面で <strong>変更を保存</strong> ボタンをクリックしたことを確認してください。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">2</span>
+<div class="step-body">
+<p><strong>ブラウザキャッシュをクリア</strong> - ブラウザのキャッシュが原因でCSSの変更が反映されない場合があります。ハードリフレッシュ（Ctrl + Shift + R）を試してください。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">3</span>
+<div class="step-body">
+<p><strong>キャッシュプラグインを確認</strong> - サーバーサイドのキャッシュプラグインを使用している場合は、キャッシュをパージしてください。</p>
+</div>
+</div>
+
+<h2>設定画面にアクセスできない</h2>
+
+<h3>症状</h3>
+<p>WordPress管理画面の左メニューに「Kashiwazaki SEO Custom 404」が表示されない。</p>
+
+<h3>解決方法</h3>
+
+<div class="step">
+<span class="step-number">1</span>
+<div class="step-body">
+<p><strong>ユーザー権限を確認</strong> - 設定ページにアクセスするには <code>manage_options</code> 権限（管理者権限）が必要です。管理者アカウントでログインしているか確認してください。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">2</span>
+<div class="step-body">
+<p><strong>プラグインの有効化を確認</strong> - プラグインが正しく有効化されているか確認してください。エラーが発生している場合は、プラグイン一覧画面にエラーメッセージが表示されます。</p>
+</div>
+</div>
+
+<h2>よくある質問</h2>
+
+<table>
+<thead>
+<tr><th style="width:35%;">質問</th><th>回答</th></tr>
+</thead>
+<tbody>
+<tr><td>データベースに新しいテーブルは作られますか？</td><td>いいえ。設定はwp_optionsテーブル（ksc404_settings）に保存されます。カスタムテーブルは作成しません。</td></tr>
+<tr><td>外部サービスと通信しますか？</td><td>いいえ。外部HTTP通信、AJAX通信、Cronジョブ、メール送信のいずれも行いません。</td></tr>
+<tr><td>他のSEOプラグインと併用できますか？</td><td>はい。基本的に他のSEOプラグインと併用可能です。JSON-LDの出力が重複する場合は、いずれかの設定を調整してください。</td></tr>
+<tr><td>マルチサイトに対応していますか？</td><td>各サイトごとにプラグインを有効化・設定する必要があります。</td></tr>
+<tr><td>アンインストール時にデータは削除されますか？</td><td>プラグインをアンインストール（削除）すると、wp_optionsに保存された設定データは削除されます。</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-warning">
+<p class="callout-title">注意</p>
+<p>問題が解決しない場合は、WordPressのデバッグモード（<code>WP_DEBUG</code>）を有効にして、エラーログを確認してください。エラーメッセージの内容が問題解決の手がかりになります。</p>
+</div>
+
+<nav class="page-nav">
+<a href="features.html" class="prev">&laquo; 機能詳細</a>
+<span></span>
+</nav>
+
+<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom 404 v1.0.2</p></footer>
+
+</main>
+
+<div class="lightbox"></div>
+<script src="js/manual.js?v=1"></script>
+</body>
+</html>

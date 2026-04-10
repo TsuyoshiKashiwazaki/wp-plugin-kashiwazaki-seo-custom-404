@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>概要 - Kashiwazaki SEO Custom 404 マニュアル</title>
+<link rel="stylesheet" href="css/style.css?v=1">
+</head>
+<body>
+
+<button class="hamburger-btn" aria-label="Menu" aria-expanded="false">&#9776;</button>
+
+<nav class="sidebar">
+<div class="sidebar-header"><h2 style="color:#fff;">Custom 404</h2><span class="version">v1.0.2</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
+<ul><li><a href="index.html">概要</a></li><li><a href="setup.html">インストール・初期設定</a></li><li><a href="features.html">機能詳細</a></li><li><a href="troubleshooting.html">トラブルシューティング</a></li></ul>
+</nav>
+
+<main class="content">
+
+<h1>Kashiwazaki SEO Custom 404 マニュアル</h1>
+
+<img src="images/main-visual.png" alt="Kashiwazaki SEO Custom 404 メインビジュアル" style="width:100%;border-radius:6px;margin-bottom:24px;">
+
+<p class="lead">Kashiwazaki SEO Custom 404 は、WordPressサイトの404エラーページをSEOに最適化されたページへ自動変換するプラグインです。スラッグ解析やタイトルキーワードマッチによる移転先ページの自動検出、JSON-LDスキーマ出力、Canonicalヘッダーのサポートにより、検索エンジンとAIクローラーの両方に正確なリダイレクト情報を伝達します。</p>
+
+<p>404エラーページは、サイトの信頼性とユーザー体験に直接影響します。本プラグインは、移転先ページのスマート検出、JSON-LD構造化データの出力、5色のカラーテーマにより、SEOフレンドリーな404ページを自動生成します。</p>
+
+<div class="feature-cards">
+<div class="feature-card">
+<span class="icon">&#128269;</span>
+<h4>スマート検出</h4>
+<p>スラッグ解析・タイトルキーワードマッチで移転先ページを自動検出</p>
+</div>
+<div class="feature-card">
+<span class="icon">&#128196;</span>
+<h4>JSON-LD出力</h4>
+<p>WebPageスキーマとCanonicalヘッダーで検索エンジンにリダイレクト情報を伝達</p>
+</div>
+<div class="feature-card">
+<span class="icon">&#127912;</span>
+<h4>5色テーマ</h4>
+<p>Default Blue / Midnight Calm / Crisp Contrast / Forest Bath / Sunset Glowから選択</p>
+</div>
+</div>
+
+<h2>主な特徴</h2>
+
+<ul>
+<li><strong>SEOフレンドリーな404ページ</strong> - スラッグ解析とタイトルキーワードマッチによる移転先ページの自動検出</li>
+<li><strong>JSON-LD WebPageスキーマ出力</strong> - mentions / potentialActions を含むWebPageスキーマを出力し、検索エンジンに構造化データを提供</li>
+<li><strong>Canonicalヘッダーサポート</strong> - 正しいページへのcanonicalヘッダーを出力し、検索エンジンを正しいURLへ誘導</li>
+<li><strong>関連記事・最新記事の表示</strong> - タグベースの関連記事と最新記事を404ページに表示し、ユーザーの離脱を防止</li>
+<li><strong>HTTP 404/410 ステータスコード対応</strong> - 適切なHTTPステータスコードを返し、検索エンジンにデッドURLの削除を促進</li>
+<li><strong>5種類のカラーテーマ</strong> - サイトのデザインに合わせてテーマを選択可能</li>
+</ul>
+
+<h2>SEOとGEOへの効果</h2>
+
+<p>本プラグインは、検索エンジン最適化（SEO）と生成エンジン最適化（GEO）の両面で効果を発揮します。</p>
+
+<ul>
+<li><strong>404/410ステータスコード</strong> - 適切なHTTPステータスコードを返すことで、検索エンジンがデッドURLをインデックスから効率的に削除できます</li>
+<li><strong>Canonicalヘッダー</strong> - 正しいページへのcanonicalヘッダーを出力することで、検索エンジンを正規のURLへ誘導します</li>
+<li><strong>JSON-LD構造化データ</strong> - WebPageスキーマ（mentions / potentialActions）を出力し、機械可読なリダイレクト情報を提供します</li>
+<li><strong>AIクローラー対応</strong> - Canonicalシグナルと構造化データにより、AIクローラーも正確なコンテンツの所在を把握できます</li>
+</ul>
+
+<h2>技術仕様</h2>
+
+<ul>
+<li><strong>データ保存:</strong> wp_options (ksc404_settings)</li>
+<li><strong>カスタムテーブル:</strong> なし</li>
+<li><strong>外部通信:</strong> なし</li>
+<li><strong>Cron:</strong> なし</li>
+<li><strong>メール:</strong> なし</li>
+<li><strong>セキュリティ:</strong> nonce検証、manage_options、sanitize_key / absint / esc_url_raw、$wpdb->prepare</li>
+</ul>
+
+<h2>動作要件</h2>
+
+<table>
+<thead>
+<tr><th style="width:35%;">項目</th><th>要件</th></tr>
+</thead>
+<tbody>
+<tr><td>WordPress</td><td>5.0 以上</td></tr>
+<tr><td>PHP</td><td>7.0 以上</td></tr>
+<tr><td>外部依存</td><td>なし（AJAX・外部HTTP通信・Cron・メール送信いずれも不使用）</td></tr>
+</tbody>
+</table>
+
+<nav class="page-nav">
+<span></span>
+<a href="setup.html" class="next">インストール・初期設定 &raquo;</a>
+</nav>
+
+<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom 404 v1.0.2</p></footer>
+
+</main>
+
+<div class="lightbox"></div>
+<script src="js/manual.js?v=1"></script>
+</body>
+</html>

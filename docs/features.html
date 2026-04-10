@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>機能詳細 - Kashiwazaki SEO Custom 404 マニュアル</title>
+<link rel="stylesheet" href="css/style.css?v=1">
+</head>
+<body>
+
+<button class="hamburger-btn" aria-label="Menu" aria-expanded="false">&#9776;</button>
+
+<nav class="sidebar">
+<div class="sidebar-header"><h2 style="color:#fff;">Custom 404</h2><span class="version">v1.0.2</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
+<ul><li><a href="index.html">概要</a></li><li><a href="setup.html">インストール・初期設定</a></li><li><a href="features.html">機能詳細</a></li><li><a href="troubleshooting.html">トラブルシューティング</a></li></ul>
+</nav>
+
+<main class="content">
+
+<h1>機能詳細</h1>
+
+<p class="lead">Kashiwazaki SEO Custom 404 が提供する各機能について詳しく説明します。スマート検出、JSON-LD出力、カラーテーマなど、SEOとユーザー体験を両立する機能を備えています。</p>
+
+<h2 id="smart-detection">スマート検出（移転先ページの自動検出）</h2>
+
+<p>存在しないURLにアクセスがあった際、プラグインはスラッグ解析とタイトルキーワードマッチを組み合わせて、移転先と思われるページを自動的に検出します。</p>
+
+<figure class="screenshot">
+    <img src="images/screenshots/02-custom404-detail.png" alt="カスタム404ページの設定" class="lightbox-trigger">
+    <figcaption>404ページのカスタマイズ設定</figcaption>
+</figure>
+
+<h3>検出の仕組み</h3>
+
+<div class="step">
+<span class="step-number">1</span>
+<div class="step-body">
+<p><strong>スラッグ解析</strong> - リクエストされたURLのスラッグ（URLの末尾部分）を分解し、既存の投稿・固定ページのスラッグと照合します。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">2</span>
+<div class="step-body">
+<p><strong>タイトルキーワードマッチ</strong> - スラッグから抽出したキーワードを使い、既存コンテンツのタイトルとマッチングを行います。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">3</span>
+<div class="step-body">
+<p><strong>候補ページの提示</strong> - マッチしたページが見つかった場合、404ページ内でユーザーに移転先として提示します。</p>
+</div>
+</div>
+
+<div class="callout callout-tip">
+<p class="callout-title">ヒント</p>
+<p>スマート検出はデータベースへの直接クエリを使用しており、外部APIやAJAX通信を一切使用しません。そのため、サーバーの負荷を最小限に抑えながら高速に動作します。</p>
+</div>
+
+<h2 id="json-ld">JSON-LD WebPageスキーマ出力</h2>
+
+<p>本プラグインは、404ページにJSON-LD形式のWebPageスキーマを出力します。これにより、検索エンジンとAIクローラーに対して、機械可読な形式でリダイレクト情報を提供します。</p>
+
+<h3>出力される構造化データ</h3>
+
+<table>
+<thead>
+<tr><th style="width:35%;">プロパティ</th><th>説明</th></tr>
+</thead>
+<tbody>
+<tr><td>@type</td><td>WebPage - ページの種類を示します</td></tr>
+<tr><td>mentions</td><td>移転先として検出されたページへの参照情報</td></tr>
+<tr><td>potentialAction</td><td>検索エンジンに対する推奨アクション情報</td></tr>
+</tbody>
+</table>
+
+<h3>SEOへの効果</h3>
+
+<p>JSON-LDによる構造化データは、検索エンジンが404ページの情報を正確に理解するのに役立ちます。特に、移転先ページの情報をmachines-readableな形式で提供することで、検索エンジンのクロール効率が向上します。</p>
+
+<h3>GEO（生成エンジン最適化）への効果</h3>
+
+<p>AIを活用した検索エンジンやクローラーは、構造化データとcanonicalシグナルを基にコンテンツの所在を判断します。JSON-LDスキーマとCanonicalヘッダーの組み合わせにより、AIクローラーも正確にリダイレクト先を把握できます。</p>
+
+<h2 id="canonical">Canonicalヘッダーサポート</h2>
+
+<p>移転先ページが検出された場合、HTTPレスポンスヘッダーにCanonical情報を出力します。これにより、検索エンジンは正規のURLを認識し、インデックスの重複を防止できます。</p>
+
+<div class="callout callout-note">
+<p class="callout-title">メモ</p>
+<p>Canonicalヘッダーは、検索エンジンに「このURLの正規版はここです」と伝える重要なシグナルです。404ページでcanonicalを適切に設定することで、検索エンジンが正しいページをインデックスに保持できます。</p>
+</div>
+
+<h2 id="status-codes">HTTP 404/410 ステータスコード</h2>
+
+<p>本プラグインは、状況に応じて適切なHTTPステータスコードを返します。</p>
+
+<table>
+<thead>
+<tr><th style="width:35%;">ステータスコード</th><th>用途</th></tr>
+</thead>
+<tbody>
+<tr><td><span class="http-4xx">404 Not Found</span></td><td>リクエストされたページが見つからない場合に返します。検索エンジンは一定期間後に再クロールを試みます。</td></tr>
+<tr><td><span class="http-4xx">410 Gone</span></td><td>ページが恒久的に削除された場合に返します。検索エンジンはインデックスからの削除を迅速に行います。</td></tr>
+</tbody>
+</table>
+
+<p>適切なステータスコードを返すことで、検索エンジンがデッドURLをインデックスから効率的に削除し、クロールバジェットの無駄遣いを防ぎます。</p>
+
+<h2 id="related-posts">関連記事・最新記事の表示</h2>
+
+<p>404ページにユーザーの探していた情報に近いコンテンツを表示することで、サイトからの離脱を防止します。</p>
+
+<h3>表示コンテンツ</h3>
+
+<table>
+<thead>
+<tr><th style="width:35%;">表示タイプ</th><th>説明</th></tr>
+</thead>
+<tbody>
+<tr><td>関連記事（タグベース）</td><td>リクエストURLから推定されるタグに基づいて、関連性の高い記事を表示します</td></tr>
+<tr><td>最新記事</td><td>サイトの最新記事を表示し、ユーザーに新しいコンテンツを提案します</td></tr>
+</tbody>
+</table>
+
+<h2 id="color-themes">5色カラーテーマ</h2>
+
+<p>サイトのデザインに合わせて、5種類のカラーテーマから選択できます。</p>
+
+<table>
+<thead>
+<tr><th style="width:35%;">テーマ名</th><th>特徴</th></tr>
+</thead>
+<tbody>
+<tr><td>Default Blue</td><td>清潔感のある青を基調とした標準テーマ</td></tr>
+<tr><td>Midnight Calm</td><td>落ち着いたダークトーンで、目に優しい配色</td></tr>
+<tr><td>Crisp Contrast</td><td>高コントラストでシャープな印象を与えるテーマ</td></tr>
+<tr><td>Forest Bath</td><td>自然をイメージしたグリーン系の癒しのテーマ</td></tr>
+<tr><td>Sunset Glow</td><td>温かみのあるオレンジ・サンセット系のテーマ</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-tip">
+<p class="callout-title">ヒント</p>
+<p>テーマの変更は管理画面の設定ページから即座に行えます。プレビューを確認しながら、サイトに最適なテーマを選択してください。</p>
+</div>
+
+<h2 id="security">セキュリティ対策</h2>
+
+<p>本プラグインは、WordPress標準のセキュリティプラクティスに準拠しています。</p>
+
+<table>
+<thead>
+<tr><th style="width:35%;">対策</th><th>詳細</th></tr>
+</thead>
+<tbody>
+<tr><td>nonce検証</td><td>設定保存時にnonceトークンを検証し、CSRF攻撃を防止します</td></tr>
+<tr><td>権限チェック</td><td>manage_options権限を持つユーザー（管理者）のみが設定を変更できます</td></tr>
+<tr><td>入力サニタイズ</td><td>sanitize_key / absint / esc_url_raw を使用して入力値を安全に処理します</td></tr>
+<tr><td>SQLインジェクション対策</td><td>$wpdb->prepare を使用してSQLクエリを安全に構築します</td></tr>
+</tbody>
+</table>
+
+<nav class="page-nav">
+<a href="setup.html" class="prev">&laquo; インストール・初期設定</a>
+<a href="troubleshooting.html" class="next">トラブルシューティング &raquo;</a>
+</nav>
+
+<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom 404 v1.0.2</p></footer>
+
+</main>
+
+<div class="lightbox"></div>
+<script src="js/manual.js?v=1"></script>
+</body>
+</html>
